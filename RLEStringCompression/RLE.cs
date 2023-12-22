@@ -5,64 +5,74 @@ namespace RLEStringCompression
 {
     public static class RLE
     {
-        // the fastest
-        #region V1
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string CompressV1(string input)
+        public static string Compress(char[] data)
         {
-            if (string.IsNullOrEmpty(input))
-                return string.Empty;
+            if (data == null || data.Length == 0)
+                return "";
 
-            int length = input.Length;
-            var compressed = new StringBuilder(length * 2);
+            StringBuilder encodedData = new StringBuilder();
+            char currentChar = data[0];
+            int count = 1;
 
-            int i = 0;
-            while (i < length)
+            // Process data in chunks
+            for (int i = 1; i < data.Length; i++)
             {
-                char currentChar = input[i];
-                int count = 1;
-
-                // Incrementing 'i' separately for efficiency
-                int nextIndex = i + 1;
-                while (nextIndex < length && input[nextIndex] == currentChar)
+                if (data[i] == currentChar)
                 {
                     count++;
-                    nextIndex++;
+                }
+                else
+                {
+                    encodedData.Append(count).Append(currentChar);
+                    currentChar = data[i];
+                    count = 1;
                 }
 
-                compressed.Append(count).Append(currentChar);
-                i = nextIndex;
+                // Process in chunks of size 'chunkSize'
+                int chunkSize = 2048; // Adjust the chunk size as needed
+                if (i % chunkSize == 0)
+                {
+                    encodedData.Append('/'); // Use a delimiter to separate chunks
+                }
             }
 
-            return compressed.ToString();
+            // Add remaining data
+            encodedData.Append(count).Append(currentChar);
+
+            return encodedData.ToString();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string DecompressV1(string input)
+        public static string Decompress(string encodedData)
         {
-            if (string.IsNullOrEmpty(input))
-                return string.Empty;
+            if (string.IsNullOrEmpty(encodedData))
+                return "";
 
-            int length = input.Length;
-            var decompressed = new StringBuilder(length);
+            StringBuilder decodedData = new StringBuilder();
+            int index = 0;
 
-            int i = 0;
-            while (i < length)
+            while (index < encodedData.Length)
             {
-                int count = input[i] - '0';
-                char character = input[i + 1];
+                char currentChar = encodedData[index++];
+                int count = 0;
+                while (index < encodedData.Length && char.IsDigit(encodedData[index]))
+                {
+                    count = count * 2048 + (encodedData[index++] - '0');
+                }
 
-                // Ensure the capacity in chunks to minimize reallocations
-                decompressed.EnsureCapacity(decompressed.Length + (count << 2));
+                while (count > 0)
+                {
+                    decodedData.Append(currentChar);
+                    count--;
+                }
 
-                for (int j = 0; j < count; j++)
-                    decompressed.Append(character);
-
-                i += 2;
+                // Skip delimiter if present
+                if (index < encodedData.Length && encodedData[index] == '/')
+                    index++;
             }
 
-            return decompressed.ToString();
+            return decodedData.ToString();
         }
-        #endregion
     }
 }

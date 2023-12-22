@@ -9,7 +9,7 @@ namespace RLEStringCompression
     [RankColumn]
     public class RLEStringCompressionDemo
     {
-        private const int length = 1024 * 1024 * 32;
+        private const int length = 1024*1024;
         private StringBuilder? sb;
         private string output = string.Empty;
 
@@ -19,13 +19,13 @@ namespace RLEStringCompression
             sb = new StringBuilder(length);
         }
 
-        [Benchmark(Baseline = true)]
-        public void RLE_V1()
+        [Benchmark]
+        public void RLEBenchmark()
         {
             if (sb != null) 
             {
-                output = RLE.CompressV1(sb.ToString());
-                RLE.DecompressV1(output);
+                output = RLE.Compress(sb.ToString().ToCharArray());
+                RLE.Decompress(output);
             } 
         }
     }
